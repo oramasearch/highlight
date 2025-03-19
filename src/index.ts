@@ -2,7 +2,7 @@ export interface HighlightOptions {
   caseSensitive?: boolean;
   strategy?:
     | "whole word match"
-    | "partial match - partial highlight"
+    | "partial match"
     | "partial match - full word highlight";
   HTMLTag?: string;
   CSSClass?: string;
@@ -13,7 +13,7 @@ type Positions = Position[];
 
 const defaultOptions: Required<HighlightOptions> = {
   caseSensitive: false,
-  strategy: "partial match - partial highlight",
+  strategy: "partial match",
   HTMLTag: "mark",
   CSSClass: "orama-highlight",
 };
@@ -49,10 +49,10 @@ export class Highlight {
     let regex: RegExp;
     if (strategy === "whole word match") {
       regex = new RegExp(`\\b${searchTerms}\\b`, regexFlags);
-    } else if (strategy === "partial match - partial highlight") {
+    } else if (strategy === "partial match") {
       regex = new RegExp(searchTerms, regexFlags);
     } else if (strategy === "partial match - full word highlight") {
-      regex = new RegExp(`\\b(${searchTerms})[^\\s]*`, regexFlags);
+      regex = new RegExp(`\\b[^\\s]*(${searchTerms})[^\\s]*\\b`, regexFlags);
     } else {
       throw new Error("Invalid highlighter strategy");
     }
