@@ -1,6 +1,9 @@
 export interface HighlightOptions {
   caseSensitive?: boolean;
-  wholeWords?: boolean;
+  strategy?:
+    | "whole word match"
+    | "partial match - partial highlight"
+    | "partial match - full word highlight";
   HTMLTag?: string;
   CSSClass?: string;
 }
@@ -8,9 +11,9 @@ export type Position = { start: number; end: number };
 
 type Positions = Position[];
 
-const defaultOptions: HighlightOptions = {
+const defaultOptions: Required<HighlightOptions> = {
   caseSensitive: false,
-  wholeWords: false,
+  strategy: "partial match - partial highlight",
   HTMLTag: "mark",
   CSSClass: "orama-highlight",
 };
@@ -32,21 +35,28 @@ export class Highlight {
 
     const caseSensitive =
       this.options.caseSensitive ?? defaultOptions.caseSensitive;
-    const wholeWords = this.options.wholeWords ?? defaultOptions.wholeWords;
+    const strategy = this.options.strategy ?? defaultOptions.strategy;
     const HTMLTag = this.options.HTMLTag ?? defaultOptions.HTMLTag;
     const CSSClass = this.options.CSSClass ?? defaultOptions.CSSClass;
     const regexFlags = caseSensitive ? "g" : "gi";
-    const boundary = wholeWords ? "\\b" : "";
     const searchTerms = this.escapeRegExp(
       caseSensitive ? this._searchTerm : this._searchTerm.toLowerCase()
     )
       .trim()
       .split(/\s+/)
       .join("|");
-    const regex = new RegExp(
-      `${boundary}${searchTerms}${boundary}`,
-      regexFlags
-    );
+
+    let regex: RegExp;
+    if (strategy === "whole word match") {
+      regex = new RegExp(`\\b${searchTerms}\\b`, regexFlags);
+    } else if (strategy === "partial match - partial highlight") {
+      regex = new RegExp(searchTerms, regexFlags);
+    } else if (strategy === "partial match - full word highlight") {
+      regex = new RegExp(`\\b(${searchTerms})[^\\s]*`, regexFlags);
+    } else {
+      throw new Error("Invalid highlighter strategy");
+    }
+
     const positions: Array<{ start: number; end: number }> = [];
     const highlightedParts: string[] = [];
 

@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, it } from "bun:test";
 import assert from "node:assert";
 import sinon from "sinon";
 import { Highlight } from "./index.js";
@@ -110,13 +110,29 @@ describe("custom configuration", () => {
     );
   });
 
-  it("should correctly highlight whole words only", () => {
+  it("should correctly highlight whole word matches only", () => {
     const text = "The quick brown fox jumps over the lazy dog";
     const searchTerm = "fox jump";
     const expectedResult =
       'The quick brown <mark class="orama-highlight">fox</mark> jumps over the lazy dog';
 
-    const highlighter = new Highlight({ wholeWords: true });
+    const highlighter = new Highlight({ strategy: "whole word match" });
+
+    assert.strictEqual(
+      highlighter.highlight(text, searchTerm).HTML,
+      expectedResult
+    );
+  });
+
+  it("should correctly highlight whole words on partial matches only", () => {
+    const text = "The quick brown fox jumps over the lazy dog";
+    const searchTerm = "fox jump";
+    const expectedResult =
+      'The quick brown <mark class="orama-highlight">fox</mark> <mark class="orama-highlight">jumps</mark> over the lazy dog';
+
+    const highlighter = new Highlight({
+      strategy: "partial match - full word highlight",
+    });
 
     assert.strictEqual(
       highlighter.highlight(text, searchTerm).HTML,
