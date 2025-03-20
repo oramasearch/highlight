@@ -139,6 +139,21 @@ describe("custom configuration", () => {
       expectedResult
     );
   });
+
+  it("should not highlight anything on 0 matches on a partial match - full word highlight strategy when the search term is nothing", () => {
+    const text = "The quick brown fox jumps over the lazy dog";
+    const searchTerm = "";
+    const expectedResult = "The quick brown fox jumps over the lazy dog";
+
+    const highlighter = new Highlight({
+      strategy: "partial match - full word highlight",
+    });
+
+    assert.strictEqual(
+      highlighter.highlight(text, searchTerm).HTML,
+      expectedResult
+    );
+  });
 });
 
 describe("highlight function - infinite loop protection", () => {
@@ -234,7 +249,7 @@ describe("special characters", () => {
   });
 });
 
-describe("empty example", () => {
+describe("null example", () => {
   // even though it is not expected we should make sure it won't break
   it("should not break when text is null", () => {
     const searchTerm = "C";
@@ -243,13 +258,13 @@ describe("empty example", () => {
     // @ts-expect-error
     assert.strictEqual(highlighter.highlight(null, searchTerm).HTML, "");
   });
-  it("should not break when search term is null", () => {
+  it("should not break when text and search term is null", () => {
     const highlighter = new Highlight();
 
     assert.strictEqual(
       // @ts-expect-error
       highlighter.highlight(null, null).HTML,
-      '<mark class="orama-highlight"></mark>'
+      ""
     );
   });
 });

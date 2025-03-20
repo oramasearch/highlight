@@ -33,11 +33,18 @@ export class Highlight {
     this._searchTerm = searchTerm ?? "";
     this._originalText = text ?? "";
 
+    if (!this._searchTerm || !this._originalText) {
+      this._positions = [];
+      this._HTML = this._originalText;
+      return this;
+    }
+
+    const HTMLTag = this.options.HTMLTag ?? defaultOptions.HTMLTag;
+    const CSSClass = this.options.CSSClass ?? defaultOptions.CSSClass;
+
     const caseSensitive =
       this.options.caseSensitive ?? defaultOptions.caseSensitive;
     const strategy = this.options.strategy ?? defaultOptions.strategy;
-    const HTMLTag = this.options.HTMLTag ?? defaultOptions.HTMLTag;
-    const CSSClass = this.options.CSSClass ?? defaultOptions.CSSClass;
     const regexFlags = caseSensitive ? "g" : "gi";
     const searchTerms = this.escapeRegExp(
       caseSensitive ? this._searchTerm : this._searchTerm.toLowerCase()
