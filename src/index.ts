@@ -1,9 +1,15 @@
+export const highlightStrategy = {
+  WHOLE_WORD_MATCH: "wholeWordMatch",
+  PARTIAL_MATCH: "partialMatch",
+  PARTIAL_MATCH_FULL_WORD: "partialMatchFullWord",
+} as const;
+
+export type HighlightStrategy =
+  (typeof highlightStrategy)[keyof typeof highlightStrategy];
+
 export interface HighlightOptions {
   caseSensitive?: boolean;
-  strategy?:
-    | "whole word match"
-    | "partial match"
-    | "partial match - full word highlight";
+  strategy?: HighlightStrategy;
   HTMLTag?: string;
   CSSClass?: string;
 }
@@ -13,7 +19,7 @@ type Positions = Position[];
 
 const defaultOptions: Required<HighlightOptions> = {
   caseSensitive: false,
-  strategy: "partial match",
+  strategy: highlightStrategy.PARTIAL_MATCH,
   HTMLTag: "mark",
   CSSClass: "orama-highlight",
 };
@@ -54,11 +60,11 @@ export class Highlight {
       .join("|");
 
     let regex: RegExp;
-    if (strategy === "whole word match") {
+    if (strategy === highlightStrategy.WHOLE_WORD_MATCH) {
       regex = new RegExp(`\\b${searchTerms}\\b`, regexFlags);
-    } else if (strategy === "partial match") {
+    } else if (strategy === highlightStrategy.PARTIAL_MATCH) {
       regex = new RegExp(searchTerms, regexFlags);
-    } else if (strategy === "partial match - full word highlight") {
+    } else if (strategy === highlightStrategy.PARTIAL_MATCH_FULL_WORD) {
       regex = new RegExp(`\\b[^\\s]*(${searchTerms})[^\\s]*\\b`, regexFlags);
     } else {
       throw new Error("Invalid highlighter strategy");
