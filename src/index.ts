@@ -1,6 +1,15 @@
+export const highlightStrategy = {
+  WHOLE_WORD_MATCH: "wholeWordMatch",
+  PARTIAL_MATCH: "partialMatch",
+  PARTIAL_MATCH_FULL_WORD: "partialMatchFullWord",
+} as const;
+
+export type HighlightStrategy =
+  (typeof highlightStrategy)[keyof typeof highlightStrategy];
+
 export interface HighlightOptions {
   caseSensitive?: boolean;
-  wholeWords?: boolean;
+  strategy?: HighlightStrategy;
   HTMLTag?: string;
   CSSClass?: string;
 }
@@ -8,9 +17,9 @@ export type Position = { start: number; end: number };
 
 type Positions = Position[];
 
-const defaultOptions: HighlightOptions = {
+const defaultOptions: Required<HighlightOptions> = {
   caseSensitive: false,
-  wholeWords: false,
+  strategy: highlightStrategy.PARTIAL_MATCH,
   HTMLTag: "mark",
   CSSClass: "orama-highlight",
 };
@@ -30,23 +39,37 @@ export class Highlight {
     this._searchTerm = searchTerm ?? "";
     this._originalText = text ?? "";
 
-    const caseSensitive =
-      this.options.caseSensitive ?? defaultOptions.caseSensitive;
-    const wholeWords = this.options.wholeWords ?? defaultOptions.wholeWords;
+    if (!this._searchTerm || !this._originalText) {
+      this._positions = [];
+      this._HTML = this._originalText;
+      return this;
+    }
+
     const HTMLTag = this.options.HTMLTag ?? defaultOptions.HTMLTag;
     const CSSClass = this.options.CSSClass ?? defaultOptions.CSSClass;
+
+    const caseSensitive =
+      this.options.caseSensitive ?? defaultOptions.caseSensitive;
+    const strategy = this.options.strategy ?? defaultOptions.strategy;
     const regexFlags = caseSensitive ? "g" : "gi";
-    const boundary = wholeWords ? "\\b" : "";
     const searchTerms = this.escapeRegExp(
       caseSensitive ? this._searchTerm : this._searchTerm.toLowerCase()
     )
       .trim()
       .split(/\s+/)
       .join("|");
-    const regex = new RegExp(
-      `${boundary}${searchTerms}${boundary}`,
-      regexFlags
-    );
+
+    let regex: RegExp;
+    if (strategy === highlightStrategy.WHOLE_WORD_MATCH) {
+      regex = new RegExp(`\\b${searchTerms}\\b`, regexFlags);
+    } else if (strategy === highlightStrategy.PARTIAL_MATCH) {
+      regex = new RegExp(searchTerms, regexFlags);
+    } else if (strategy === highlightStrategy.PARTIAL_MATCH_FULL_WORD) {
+      regex = new RegExp(`\\b[^\\s]*(${searchTerms})[^\\s]*\\b`, regexFlags);
+    } else {
+      throw new Error("Invalid highlighter strategy");
+    }
+
     const positions: Array<{ start: number; end: number }> = [];
     const highlightedParts: string[] = [];
 

@@ -1,7 +1,7 @@
-import { describe, it, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, it } from "bun:test";
 import assert from "node:assert";
 import sinon from "sinon";
-import { Highlight } from "./index.js";
+import { Highlight, highlightStrategy } from "./index.js";
 
 describe("default configuration", () => {
   it("should correctly highlight a text", () => {
@@ -110,13 +110,44 @@ describe("custom configuration", () => {
     );
   });
 
-  it("should correctly highlight whole words only", () => {
+  it("should correctly highlight whole word matches only", () => {
     const text = "The quick brown fox jumps over the lazy dog";
     const searchTerm = "fox jump";
     const expectedResult =
       'The quick brown <mark class="orama-highlight">fox</mark> jumps over the lazy dog';
 
-    const highlighter = new Highlight({ wholeWords: true });
+    const highlighter = new Highlight({ strategy: highlightStrategy.WHOLE_WORD_MATCH });
+
+    assert.strictEqual(
+      highlighter.highlight(text, searchTerm).HTML,
+      expectedResult
+    );
+  });
+
+  it("should correctly highlight whole words on partial matches only", () => {
+    const text = "The quick brown fox jumps over the lazy dog";
+    const searchTerm = "fo umps ve";
+    const expectedResult =
+      'The quick brown <mark class="orama-highlight">fox</mark> <mark class="orama-highlight">jumps</mark> <mark class="orama-highlight">over</mark> the lazy dog';
+
+    const highlighter = new Highlight({
+      strategy: highlightStrategy.PARTIAL_MATCH_FULL_WORD,
+    });
+
+    assert.strictEqual(
+      highlighter.highlight(text, searchTerm).HTML,
+      expectedResult
+    );
+  });
+
+  it("should not highlight anything on 0 matches on a partial match, full word highlight strategy when the search term is nothing", () => {
+    const text = "The quick brown fox jumps over the lazy dog";
+    const searchTerm = "";
+    const expectedResult = "The quick brown fox jumps over the lazy dog";
+
+    const highlighter = new Highlight({
+      strategy: highlightStrategy.PARTIAL_MATCH_FULL_WORD,
+    });
 
     assert.strictEqual(
       highlighter.highlight(text, searchTerm).HTML,
@@ -218,7 +249,7 @@ describe("special characters", () => {
   });
 });
 
-describe("empty example", () => {
+describe("null example", () => {
   // even though it is not expected we should make sure it won't break
   it("should not break when text is null", () => {
     const searchTerm = "C";
@@ -227,13 +258,13 @@ describe("empty example", () => {
     // @ts-expect-error
     assert.strictEqual(highlighter.highlight(null, searchTerm).HTML, "");
   });
-  it("should not break when search term is null", () => {
+  it("should not break when text and search term is null", () => {
     const highlighter = new Highlight();
 
     assert.strictEqual(
       // @ts-expect-error
       highlighter.highlight(null, null).HTML,
-      '<mark class="orama-highlight"></mark>'
+      ""
     );
   });
 });
